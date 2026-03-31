@@ -1,0 +1,25 @@
+[package]
+name = "vzglyd-slide"
+version = "0.1.0"
+edition = "2024"
+description = "ABI contract and data types for VZGLYD display engine slides"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/vzglyd/vzglyd"
+homepage = "https://github.com/vzglyd/vzglyd"
+documentation = "https://docs.rs/vzglyd-slide"
+readme = "README.md"
+keywords = ["vzglyd", "slide", "display", "wasm", "ambient-display"]
+categories = ["rendering", "embedded", "wasm"]
+rust-version = "1.85"
+
+[features]
+## Enable GPU vertex layout helpers (`desc()`, `ATTRIBS`) for use in wgpu pipelines.
+gpu = ["dep:wgpu"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+bytemuck = { version = "1", features = ["derive"] }
+wgpu = { version = "23", optional = true }
+
+[dev-dependencies]
+serde = { version = "1", features = ["derive"] }
