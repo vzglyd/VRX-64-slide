@@ -1,16 +1,19 @@
 [package]
-name = "vzglyd-slide"
+name = "VRX-64-slide"
 version = "0.1.0"
 edition = "2024"
 description = "ABI contract and data types for VZGLYD display engine slides"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/vzglyd/vzglyd"
 homepage = "https://github.com/vzglyd/vzglyd"
-documentation = "https://docs.rs/vzglyd-slide"
+documentation = "https://docs.rs/VRX-64-slide"
 readme = "README.md"
 keywords = ["vzglyd", "slide", "display", "wasm", "ambient-display"]
 categories = ["rendering", "embedded", "wasm"]
 rust-version = "1.85"
+
+[lib]
+name = "vzglyd_slide"
 
 [features]
 ## Enable GPU vertex layout helpers (`desc()`, `ATTRIBS`) for use in wgpu pipelines.

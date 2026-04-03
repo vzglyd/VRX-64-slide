@@ -1,10 +1,10 @@
-# Contributing to vzglyd-slide
+# Contributing to VRX-64-slide
 
 Thanks for your interest in contributing.
 
 ## What this crate is
 
-`vzglyd-slide` defines the ABI contract between the vzglyd engine and compiled slides. Changes here affect every slide ever built against this crate — treat it accordingly.
+`VRX-64-slide` defines the ABI contract between the vzglyd engine and compiled slides. Changes here affect every slide ever built against this crate — treat it accordingly.
 
 ## ABI discipline
 

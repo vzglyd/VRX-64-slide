@@ -1,12 +1,12 @@
-# `vzglyd-slide`
+# `VRX-64-slide`
 
-`vzglyd-slide` is the ABI contract crate for [VZGLYD](https://github.com/vzglyd/vzglyd), a Raspberry Pi display engine for ambient slides compiled to WebAssembly.
+`VRX-64-slide` is the ABI contract crate for [VZGLYD](https://github.com/vzglyd/vzglyd), a Raspberry Pi display engine for ambient slides compiled to WebAssembly.
 
 Add it to your slide crate:
 
 ```toml
 [dependencies]
-vzglyd-slide = "0.1"
+VRX-64-slide = "0.1"
 ```
 
 Slides export `vzglyd_update` so the engine can step the slide every frame:

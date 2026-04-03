@@ -1,21 +1,21 @@
-# `vzglyd-slide` ABI Policy
+# `VRX-64-slide` ABI Policy
 
-`vzglyd-slide` defines the binary contract between the VZGLYD engine and every slide compiled for it. Once a slide is shipped as `slide.wasm`, the engine must be able to tell whether that package is safe to load and what compatibility guarantees apply. This document is that contract.
+`VRX-64-slide` defines the binary contract between the VZGLYD engine and every slide compiled for it. Once a slide is shipped as `slide.wasm`, the engine must be able to tell whether that package is safe to load and what compatibility guarantees apply. This document is that contract.
 
 ## Scope
 
 This policy covers:
 
-- the public Rust API exposed by `vzglyd-slide`
+- the public Rust API exposed by `VRX-64-slide`
 - the serialized `SlideSpec` wire format
 - the exported guest functions the engine expects from a slide
 - the `abi_version` recorded in slide manifests
 
-It does not cover `vzglyd-sidecar`, which is versioned independently.
+It does not cover `VRX-64-sidecar`, which is versioned independently.
 
 ## Versioning Model
 
-`vzglyd-slide` follows semantic versioning. ABI impact maps to versions as follows.
+`VRX-64-slide` follows semantic versioning. ABI impact maps to versions as follows.
 
 | Change | Version bump | ABI impact |
 | --- | --- | --- |
@@ -44,7 +44,7 @@ Breaking changes include, but are not limited to:
 
 - changing the signature of `vzglyd_update(dt: f32) -> i32`
 - adding a new required export that old slides do not provide
-- removing or renaming any public `vzglyd-slide` type used by slides
+- removing or renaming any public `VRX-64-slide` type used by slides
 - changing the postcard representation of `SlideSpec`
 - changing trait bounds in a way that invalidates existing slide vertex types
 
@@ -56,10 +56,10 @@ Non-breaking changes include, but are not limited to:
 
 ## Dependency Guidance For Slide Authors
 
-Until `vzglyd-slide` reaches `1.0.0`, follow Cargo's pre-1.0 convention and depend on the current minor line:
+Until `VRX-64-slide` reaches `1.0.0`, follow Cargo's pre-1.0 convention and depend on the current minor line:
 
 ```toml
-vzglyd-slide = "0.1"
+VRX-64-slide = "0.1"
 ```
 
 That allows patch updates but avoids silently picking up a new pre-1.0 minor release that may contain breaking changes.
@@ -67,7 +67,7 @@ That allows patch updates but avoids silently picking up a new pre-1.0 minor rel
 After `1.0.0`, depend on the current major:
 
 ```toml
-vzglyd-slide = "1"
+VRX-64-slide = "1"
 ```
 
 ## ABI Version Signaling

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `vzglyd-slide` are documented here.
+All notable changes to `VRX-64-slide` are documented here.
 
 ## [Unreleased]
 
