@@ -47,6 +47,12 @@ use bytemuck::Pod;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
+mod trace;
+
+pub use trace::{
+    TraceScope, trace_event, trace_event_with_attrs, trace_scope, trace_scope_with_attrs,
+};
+
 /// Current slide ABI version understood by this crate and the engine.
 pub const ABI_VERSION: u32 = 1;
 

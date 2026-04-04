@@ -21,6 +21,7 @@ gpu = ["dep:wgpu"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 bytemuck = { version = "1", features = ["derive"] }
 wgpu = { version = "23", optional = true }
 
