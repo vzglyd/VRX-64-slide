@@ -52,6 +52,8 @@ mod trace;
 pub use trace::{
     TraceScope, trace_event, trace_event_with_attrs, trace_scope, trace_scope_with_attrs,
 };
+#[doc(hidden)]
+pub use trace::{traced_configure_entrypoint, traced_init_entrypoint, traced_update_entrypoint};
 
 /// Current slide ABI version understood by this crate and the engine.
 pub const ABI_VERSION: u32 = 1;
@@ -969,6 +971,91 @@ macro_rules! params_buf {
         #[unsafe(no_mangle)]
         pub extern "C" fn vzglyd_params_capacity() -> u32 {
             $size as u32
+        }
+    };
+}
+
+/// Export traced `vzglyd_configure`, `vzglyd_init`, and `vzglyd_update` entrypoints.
+///
+/// The generated exports preserve the stable slide ABI while automatically wrapping the
+/// provided implementation functions in top-level trace spans. Inner slide logic can still add
+/// more specific spans with [`trace_scope`] and [`trace_event`].
+///
+/// # Examples
+///
+/// ```no_run
+/// fn slide_init() -> i32 {
+///     0
+/// }
+///
+/// fn slide_update(_dt: f32) -> i32 {
+///     0
+/// }
+///
+/// vzglyd_slide::export_traced_entrypoints! {
+///     init = slide_init,
+///     update = slide_update,
+/// }
+/// ```
+///
+/// ```no_run
+/// fn slide_configure(_len: i32) -> i32 {
+///     0
+/// }
+///
+/// fn slide_init() -> i32 {
+///     0
+/// }
+///
+/// fn slide_update(_dt: f32) -> i32 {
+///     0
+/// }
+///
+/// vzglyd_slide::export_traced_entrypoints! {
+///     configure = slide_configure,
+///     init = slide_init,
+///     update = slide_update,
+/// }
+/// ```
+#[macro_export]
+macro_rules! export_traced_entrypoints {
+    (
+        configure = $configure:path,
+        init = $init:path,
+        update = $update:path $(,)?
+    ) => {
+        #[cfg(target_arch = "wasm32")]
+        #[unsafe(no_mangle)]
+        pub extern "C" fn vzglyd_configure(len: i32) -> i32 {
+            $crate::traced_configure_entrypoint(len, $configure)
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        #[unsafe(no_mangle)]
+        pub extern "C" fn vzglyd_init() -> i32 {
+            $crate::traced_init_entrypoint($init)
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        #[unsafe(no_mangle)]
+        pub extern "C" fn vzglyd_update(dt: f32) -> i32 {
+            $crate::traced_update_entrypoint(dt, $update)
+        }
+    };
+    (
+        init = $init:path,
+        update = $update:path $(,)?
+    ) => {
+        #[cfg(target_arch = "wasm32")]
+        #[unsafe(no_mangle)]
+        pub extern "C" fn vzglyd_init() -> i32 {
+            $crate::traced_init_entrypoint($init)
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        #[unsafe(no_mangle)]
+        pub extern "C" fn vzglyd_update(dt: f32) -> i32 {
+            $crate::traced_update_entrypoint(dt, $update)
         }
     };
 }

@@ -164,9 +164,58 @@ pub fn trace_event_with_attrs(name: &str, attrs: &[(&str, &str)]) {
     }
 }
 
+fn trace_status_for_code(status_code: i32) -> &'static str {
+    if status_code < 0 { "error" } else { "ok" }
+}
+
+/// Run a slide `vzglyd_configure` implementation inside a standard top-level trace span.
+#[doc(hidden)]
+pub fn traced_configure_entrypoint<F>(len: i32, configure: F) -> i32
+where
+    F: FnOnce(i32) -> i32,
+{
+    let bytes = len.max(0);
+    let bytes_str = bytes.to_string();
+    let mut trace = trace_scope_with_attrs("vzglyd_configure", &[("bytes", bytes_str.as_str())]);
+    let status_code = configure(len);
+    trace.set_status(trace_status_for_code(status_code));
+    trace.add_attr("status_code", status_code.to_string());
+    status_code
+}
+
+/// Run a slide `vzglyd_init` implementation inside a standard top-level trace span.
+#[doc(hidden)]
+pub fn traced_init_entrypoint<F>(init: F) -> i32
+where
+    F: FnOnce() -> i32,
+{
+    let mut trace = trace_scope("vzglyd_init");
+    let status_code = init();
+    trace.set_status(trace_status_for_code(status_code));
+    trace.add_attr("status_code", status_code.to_string());
+    status_code
+}
+
+/// Run a slide `vzglyd_update` implementation inside a standard top-level trace span.
+#[doc(hidden)]
+pub fn traced_update_entrypoint<F>(dt: f32, update: F) -> i32
+where
+    F: FnOnce(f32) -> i32,
+{
+    let dt_ms = format!("{:.3}", dt * 1000.0);
+    let mut trace = trace_scope_with_attrs("vzglyd_update", &[("dt_ms", dt_ms.as_str())]);
+    let status_code = update(dt);
+    trace.set_status(trace_status_for_code(status_code));
+    trace.add_attr("status_code", status_code.to_string());
+    status_code
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{encode_end_payload, encode_payload};
+    use super::{
+        encode_end_payload, encode_payload, traced_configure_entrypoint, traced_init_entrypoint,
+        traced_update_entrypoint,
+    };
 
     #[test]
     fn encodes_trace_payload_with_attrs() {
@@ -182,5 +231,38 @@ mod tests {
         let json = String::from_utf8(payload).expect("utf8");
         assert!(json.contains("\"status\":\"ok\""));
         assert!(json.contains("\"changed\":\"true\""));
+    }
+
+    #[test]
+    fn traced_configure_returns_inner_status() {
+        let mut seen = None;
+        let status = traced_configure_entrypoint(42, |len| {
+            seen = Some(len);
+            0
+        });
+        assert_eq!(seen, Some(42));
+        assert_eq!(status, 0);
+    }
+
+    #[test]
+    fn traced_init_returns_inner_status() {
+        let mut called = false;
+        let status = traced_init_entrypoint(|| {
+            called = true;
+            0
+        });
+        assert!(called);
+        assert_eq!(status, 0);
+    }
+
+    #[test]
+    fn traced_update_returns_inner_status() {
+        let mut seen = None;
+        let status = traced_update_entrypoint(0.25, |dt| {
+            seen = Some(dt);
+            1
+        });
+        assert_eq!(seen, Some(0.25));
+        assert_eq!(status, 1);
     }
 }

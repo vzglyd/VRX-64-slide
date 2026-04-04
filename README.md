@@ -12,15 +12,24 @@ vzglyd_slide = { package = "VRX-64-slide", path = "../VRX-64-slide" }
 Slides export `vzglyd_update` so the engine can step the slide every frame:
 
 ```rust
-#[unsafe(no_mangle)]
-pub extern "C" fn vzglyd_update(_dt: f32) -> i32 {
-    0
+#[cfg(target_arch = "wasm32")]
+fn slide_init() -> i32 { 0 }
+
+#[cfg(target_arch = "wasm32")]
+fn slide_update(_dt: f32) -> i32 { 0 }
+
+#[cfg(target_arch = "wasm32")]
+vzglyd_slide::export_traced_entrypoints! {
+    init = slide_init,
+    update = slide_update,
 }
 ```
 
 ## Tracing
 
-The slide ABI now includes additive trace helpers for guest code:
+Use `export_traced_entrypoints!` for the top-level ABI exports. It keeps the stable `vzglyd_*`
+ABI shape while automatically emitting `vzglyd_configure`, `vzglyd_init`, and `vzglyd_update`
+guest spans. Add inner scopes only where you need more detail:
 
 ```rust
 use vzglyd_slide::{trace_event, trace_scope};
@@ -31,6 +40,9 @@ scope.set_status("ok");
 ```
 
 These helpers compile to no-ops on non-wasm targets and use optional host imports on wasm, so older hosts keep working.
+
+Native and web hosts still emit per-slide load, update, upload, and render spans even for slides
+that do not add any custom guest scopes yet.
 
 Slides do not own a browser player shell. Web playback and profiling live in `VRX-64-web`; slide repos should only ship bundles and optional preview helpers that redirect into the canonical viewer.
 
