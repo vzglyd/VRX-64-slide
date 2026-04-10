@@ -40,7 +40,7 @@ Add a `sounds` array inside the `assets` section of your `manifest.json`. Each e
 ```json
 {
   "name": "My Audio Slide",
-  "abi_version": 2,
+  "abi_version": 3,
   "scene_space": "world_3d",
   "assets": {
     "sounds": [
@@ -228,7 +228,9 @@ All audio functions return an `i32`:
 | Return Value | Meaning |
 |-------------|---------|
 | `0` | Success |
-| Negative value | Host error (e.g., sound not found, decode error, device unavailable) |
+| `-1` | Generic host error (decode failure, internal error) |
+| `-4` | Asset not found — the key passed to `play_sound()` does not match any declared sound |
+| Other negative | Additional host-specific error conditions |
 
 In practice, most slide code ignores the return value since the host logs errors:
 
@@ -265,12 +267,13 @@ play_sound(1, "bg_music", 0.5, false);
 
 ## ABI Version Requirement
 
-Audio requires **ABI version 2**. Your `manifest.json` must declare `"abi_version": 2`, and
-your slide's `vzglyd_abi_version()` function must return `2`. If you're using `vzglyd_slide`
-0.1.x (which ships ABI 2), this happens automatically — just use `ABI_VERSION` from the crate:
+Audio requires a minimum of **ABI version 2**. The current crate ships **ABI version 3**
+(which also includes animation support). Your `manifest.json` must declare at least
+`"abi_version": 2`, and your slide's `vzglyd_abi_version()` function must return the same
+value. Using `ABI_VERSION` from the crate always gives the correct value automatically:
 
 ```rust
-use vzglyd_slide::ABI_VERSION; // currently 2
+use vzglyd_slide::ABI_VERSION; // currently 3
 
 #[unsafe(no_mangle)]
 pub extern "C" fn vzglyd_abi_version() -> u32 {
@@ -278,7 +281,11 @@ pub extern "C" fn vzglyd_abi_version() -> u32 {
 }
 ```
 
-### Why Was the ABI Bumped?
+> **Note:** If your slide uses audio but not animations, `"abi_version": 2` in
+> `manifest.json` is technically sufficient. However, new projects should use the current
+> `ABI_VERSION` (3) to avoid confusion and future-proof the slide.
+
+### Why Was the ABI Bumped From 1 to 2?
 
 Three reasons, all of which make audio **incompatible with ABI 1** engines:
 
@@ -296,7 +303,40 @@ Three reasons, all of which make audio **incompatible with ABI 1** engines:
 
 The engine enforces the ABI check on load, so:
 - **Old slides (ABI 1)** still work on new engines (compatibility window)
-- **New slides (ABI 2)** are rejected by old engines (safe — no silent corruption)
+- **New slides (ABI 2+)** are rejected by old engines (safe — no silent corruption)
+
+---
+
+## Known Limitations
+
+### Web host: `pause_sound` is not a true pause
+
+On the **web host**, `pause_sound()` is implemented by setting the Web Audio `playbackRate`
+to `0` rather than using a real pause/resume mechanism. This means:
+
+- The sound position is not preserved accurately across pause/resume cycles under all
+  browsers.
+- There is no behavioral difference between this and the native host for typical signage
+  use cases (background music, ambient sounds), but if your slide requires sample-accurate
+  timing, test on the target platform.
+
+The **native host** uses rodio's `Sink::pause()` / `Sink::play()`, which is a true pause.
+
+### Web host: missing-ID operations return success
+
+On the **web host**, calling `stop_sound()`, `pause_sound()`, `resume_sound()`, or
+`set_volume()` with an ID that has never been played returns `0` (success). On the
+**native host**, the same calls return a negative error code. This divergence is
+intentional (the web host treats unknown IDs as no-ops) but means you cannot rely on the
+return value to detect programming errors when testing on the web.
+
+### Web host: autoplay policy
+
+Web browsers require a user gesture before playing audio. The web host calls
+`AudioContext.resume()` on the first user interaction, but on some browsers the audio
+context may remain suspended if no interaction occurs. This is a browser constraint, not
+a VZGLYD limitation. In kiosk deployments where the browser is opened programmatically,
+you may need to pre-warm the audio context with a silent unlock gesture.
 
 ---
 
@@ -304,7 +344,7 @@ The engine enforces the ABI check on load, so:
 
 ### Sound doesn't play at all
 
-1. Check that `manifest.json` has `"abi_version": 2` (audio requires ABI v2)
+1. Check that `manifest.json` has `"abi_version": 2` or higher (audio requires ABI v2+)
 2. Verify the sound file exists at the path specified in `manifest.json`
 3. Check the `id` you pass to `play_sound()` matches the `id` in the manifest
 4. Check the host logs — the engine logs warnings for missing sounds

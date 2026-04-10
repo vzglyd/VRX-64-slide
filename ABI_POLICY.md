@@ -29,7 +29,7 @@ It does not cover `VRX-64-sidecar`, which is versioned independently.
 
 The engine validates slide compatibility at load time using the manifest's `abi_version` and the slide module's exported `vzglyd_abi_version()` symbol.
 
-Current ABI version: `2`
+Current ABI version: `3`
 
 Compatibility guarantees:
 
@@ -39,6 +39,29 @@ Compatibility guarantees:
 - a slide compiled against ABI version 1 remains compatible with any engine release that still accepts ABI version 1
 
 ## ABI Version History
+
+### ABI Version 3
+
+**Breaking change.** Added GLB animation support with push constant model matrices. The version was bumped because existing ABI 1 and ABI 2 engines cannot safely load ABI 3 slides — doing so would corrupt memory or produce incorrect rendering.
+
+Why this is breaking (not additive):
+
+1. **`SlideSpec` postcard layout changed.** A new `animations: Vec<AnimationClip>` field was inserted after `sounds`. Postcard is position-dependent: an ABI 1 or ABI 2 engine deserializing an ABI 3 spec would interpret animation keyframe data as `StaticMesh` or other subsequent structs, producing garbage values and potential out-of-bounds memory access.
+
+2. **Shader contract changed.** World3D slide shaders now expect a push constant block (`VzglydPushConstants`) containing a `model_matrix: mat4x4<f32>`. ABI 1/2 engines using the old shader prelude will not set push constants before drawing animated meshes, resulting in missing or incorrect transforms.
+
+3. **Render pipeline layout changed.** World3D render pipelines now include `push_constant_ranges` for the model matrix. ABI 1/2 engines that don't call `set_push_constants` before drawing will produce incorrect geometry for animated meshes.
+
+Changes introduced:
+
+- New `animations: Vec<AnimationClip>` field in `SlideSpec` (after `sounds`, before `static_meshes`)
+- New `AnimationPath` enum (`Translation`, `Rotation`, `Scale`)
+- New `AnimationChannel` struct (`node_label`, `path`, `keyframe_times`, `keyframe_values`)
+- New `AnimationClip` struct (`name`, `duration`, `looped`, `channels`)
+- New `VzglydPushConstants` struct in shader prelude (`model_matrix: [[f32; 4]; 4]`)
+- World3D pipelines now use push constants for per-draw model matrices
+- Animation sampling at render time: keyframe interpolation with lerp (translation/scale) and slerp (rotation quaternions)
+- GLB animation data pipeline: kernel parsing → slide ABI types → native/web scene compilation
 
 ### ABI Version 2
 

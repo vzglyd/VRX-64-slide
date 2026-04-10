@@ -105,7 +105,7 @@ pub use trace::{traced_configure_entrypoint, traced_init_entrypoint, traced_upda
 pub use audio::{pause_sound, play_sound, resume_sound, set_volume, stop_sound};
 
 /// Current slide ABI version understood by this crate and the engine.
-pub const ABI_VERSION: u32 = 2;
+pub const ABI_VERSION: u32 = 3;
 
 /// Resource and geometry limits a slide is allowed to consume.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
@@ -462,6 +462,51 @@ pub struct SoundDesc {
     pub data: Vec<u8>,
 }
 
+/// Which transform property an animation channel targets.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AnimationPath {
+    /// Node translation (XYZ).
+    Translation,
+    /// Node rotation as a quaternion (XYZW).
+    Rotation,
+    /// Node scale (XYZ).
+    Scale,
+}
+
+/// A single keyframe channel within an animation clip.
+///
+/// Each channel animates one transform property on one scene node,
+/// identified by `node_label` (matching a static mesh label or anchor ID).
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AnimationChannel {
+    /// Label of the scene node this channel animates.
+    pub node_label: String,
+    /// Which transform property is animated.
+    pub path: AnimationPath,
+    /// Keyframe timestamps in seconds.
+    pub keyframe_times: Vec<f32>,
+    /// Keyframe values. For translation/scale: `[x, y, z, 0]`. For rotation: quaternion `[x, y, z, w]`.
+    pub keyframe_values: Vec<[f32; 4]>,
+}
+
+/// An animation clip embedded in a slide bundle.
+///
+/// A clip groups multiple channels (one per animated node/property) that
+/// share a common timeline. Most GLB files export a single default clip.
+/// At render time, the host samples the clip to produce per-draw model
+/// matrices that transform static meshes.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AnimationClip {
+    /// Animation name (e.g., `"Action"` from Blender).
+    pub name: String,
+    /// Total duration of the clip in seconds.
+    pub duration: f32,
+    /// Whether the clip loops continuously.
+    pub looped: bool,
+    /// Per-node animation channels.
+    pub channels: Vec<AnimationChannel>,
+}
+
 /// Named anchor extracted from an imported scene asset.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct SceneAnchor {
@@ -590,6 +635,12 @@ pub struct SlideSpec<V: Pod> {
     pub textures: Vec<TextureDesc>,
     /// Sound payloads embedded in the package.
     pub sounds: Vec<SoundDesc>,
+    /// Animation clips embedded in the package.
+    ///
+    /// Each clip contains channels that animate node transforms
+    /// (translation, rotation, scale) over time. Clips are sampled
+    /// at render time to produce per-draw model matrices.
+    pub animations: Vec<AnimationClip>,
     /// Static meshes uploaded once when the slide loads.
     pub static_meshes: Vec<StaticMesh<V>>,
     /// Dynamic meshes whose vertices may change at runtime.
@@ -1270,6 +1321,7 @@ mod tests {
                 data: vec![255, 255, 255, 255],
             }],
             sounds: vec![],
+            animations: vec![],
             static_meshes: vec![StaticMesh {
                 label: "m".to_string(),
                 vertices: vec![V { pos: [0.0; 3] }; 4],
