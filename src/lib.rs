@@ -135,8 +135,8 @@ impl Limits {
             max_static_meshes: 12,
             max_dynamic_meshes: 12,
             max_textures: 4,
-            max_texture_bytes: 512 * 512 * 4 * 4, // up to four 512² RGBA8 textures
-            max_texture_dim: 512,
+            max_texture_bytes: 640 * 480 * 4 * 4, // up to four 640×480 RGBA8 textures
+            max_texture_dim: 640,
         }
     }
 }
