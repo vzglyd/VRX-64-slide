@@ -130,10 +130,10 @@ impl Limits {
     /// Conservative limits chosen to stay within Raspberry Pi 4 budgets.
     pub const fn pi4() -> Self {
         Self {
-            max_vertices: 600_000,
-            max_indices: 1_500_000,
-            max_static_meshes: 10,
-            max_dynamic_meshes: 10,
+            max_vertices: 3_000_000,
+            max_indices: 3_000_000,
+            max_static_meshes: 12,
+            max_dynamic_meshes: 12,
             max_textures: 4,
             max_texture_bytes: 640 * 640 * 4 * 4, // up to four 640² RGBA8 textures
             max_texture_dim: 640,
