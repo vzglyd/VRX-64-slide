@@ -11,7 +11,7 @@ This policy covers:
 - the exported guest functions the engine expects from a slide
 - the `abi_version` recorded in slide manifests
 
-It does not cover `VRX-64-sidecar`, which is versioned independently.
+It does not cover retired acquisition/runtime repos such as `VRX-64-sidecar`; live data now reaches slides through the host-owned `channel_poll` mailbox contract.
 
 ## Versioning Model
 
@@ -107,6 +107,7 @@ Initial public ABI with rendering support:
 - Required exports: `vzglyd_abi_version`, `vzglyd_spec_ptr`, `vzglyd_spec_len`, `vzglyd_init`, `vzglyd_update`
 - Optional exports: `vzglyd_params_ptr`, `vzglyd_params_capacity`, `vzglyd_configure`, `vzglyd_overlay_ptr`, `vzglyd_overlay_len`, `vzglyd_dynamic_meshes_ptr`, `vzglyd_dynamic_meshes_len`, `vzglyd_teardown`
 - Host imports: `channel_poll`, `channel_active`, `log_info`, `mesh_asset_len`, `mesh_asset_read`, `scene_metadata_len`, `scene_metadata_read`, `trace_span_start`, `trace_span_end`, `trace_event`
+- `channel_poll` is the stable host-data mailbox used for watched JSON result files such as `brrmmmm` `.out.json` mission records
 - `SlideSpec` with textures, static meshes, dynamic meshes, draws, lighting
 
 ## What Counts As Breaking

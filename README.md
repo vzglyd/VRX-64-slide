@@ -25,6 +25,10 @@ vzglyd_slide::export_traced_entrypoints! {
 }
 ```
 
+Slides read host-provided data through `channel_poll`. In the native runtime,
+those bytes come from the watched JSON file configured by `playlist.json ->
+slides[].data_path` or `--scene --data-path`.
+
 ## Tracing
 
 Use `export_traced_entrypoints!` for the top-level ABI exports. It keeps the stable `vzglyd_*`
@@ -41,10 +45,8 @@ scope.set_status("ok");
 
 These helpers compile to no-ops on non-wasm targets and use optional host imports on wasm, so older hosts keep working.
 
-Native and web hosts still emit per-slide load, update, upload, and render spans even for slides
-that do not add any custom guest scopes yet.
-
-Slides do not own a browser player shell. Web playback and profiling live in `VRX-64-web`; slide repos should only ship bundles and optional preview helpers that redirect into the canonical viewer.
+The native host still emits per-slide load, update, upload, and render spans
+even for slides that do not add any custom guest scopes yet.
 
 Further reading:
 
